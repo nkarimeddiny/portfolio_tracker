@@ -44,12 +44,11 @@ class StockListing2(db.Model):
 class MainHandler(webapp2.RequestHandler):
 
     #This retrieves the most current prices available for stocks in the user's portfolio. Recursive
-    #calls are made to go back to previous dates. date, raw-date, and price_date are all lists (and therefore
-    #on the heap). date is needed for the api call, raw_date is needed to increment the date backwards for
-    #recursive calls, and price_date will be displayed to the user. Recursive calls are only needed for the
-    #first stock in the portfolio; once the prices are found, date and raw_date are already set appropriately
-    #for finding the prices of the other stocks in the portfolio 
-    def getMostRecentPrices(self, auth_token, stock_name, date, raw_date, price_date, stockPricesList):
+    #calls are made to go back to previous dates. date and price_date are lists (and therefore
+    #on the heap). date is needed for the api call, and price_date will be displayed to the user. 
+    #Recursive calls are only needed for the first stock in the portfolio; once the prices are found, 
+    #date is already set appropriately for finding the prices of the other stocks in the portfolio 
+    def getMostRecentPrices(self, auth_token, stock_name, date, price_date, stockPricesList):
 
         url_part1 = "http://www.quandl.com/api/v1/datasets/WIKI/" + stock_name
         url_part2 = ".json?" + auth_token + "&column=4&sort_order=asc&collapse=daily&trim_start=" + str(date[0]) + "&trim_end=" + str(date[0])
@@ -66,13 +65,13 @@ class MainHandler(webapp2.RequestHandler):
                 price_date[0] = format(date[0], '%Y-%m-%d')
 
               except IndexError: #today's stock prices not available, so go back one day and make recursive method call
-                raw_date[0] = raw_date[0] + timedelta(days = -1)
-                yearmonthdayInStackFrame = format(date[0], '%Y%m%d')
-                yearmonthdayCurrent = format(datetime.now() + timedelta(hours = -4), '%Y%m%d')
+                yearmonthdayInStackFrame = date[0]
+                current_datetime = datetime.now() + timedelta(hours = -4)
+                current_date = current_datetime.date()
                 #the following conditional is to prevent more than 5 recursive calls from being made
-                if (int(yearmonthdayCurrent) - int(yearmonthdayInStackFrame)) < 5 :
-                   date[0] = raw_date[0].date()
-                   self.getMostRecentPrices(auth_token, stock_name, date, raw_date, price_date, stockPricesList)
+                if (current_date - yearmonthdayInStackFrame < timedelta(days = 5)):
+                   date[0] = date[0] + timedelta(days = -1)
+                   self.getMostRecentPrices(auth_token, stock_name, date, price_date, stockPricesList)
                 else:
                    self.response.write("<h1>Error loading data. Please try again later</h1>")
               except TypeError:
@@ -120,7 +119,7 @@ class MainHandler(webapp2.RequestHandler):
         date = raw_date.date()
         dateToDisplay = format(date, '%Y-%m-%d')
         yearmonthday = format(date, '%Y%m%d')
-        return [date, dateToDisplay, raw_date]
+        return [date, dateToDisplay]
 
     def getUsername(self):
 
@@ -152,13 +151,12 @@ class MainHandler(webapp2.RequestHandler):
         auth_token = "auth_token=UQyxTU4BY5osYsTTqpRd"
         #dates are being given to getMostRecentPrices() in arrays so that if method is called recursively to go back to
         #previous dates, these dates will be changed on the heap. As a result, the second stock and on will not need recursive
-        #calls, but will first check the previous date
+        #calls, but will first check the correct date
         date =  [dateArray[0]]
-        raw_date = [dateArray[2]]
         price_date = [dateArray[1]]
         for stock in mystocks:
             stock_name = stock.stock_name
-            self.getMostRecentPrices(auth_token, stock_name, date, raw_date, price_date, stockPricesList)
+            self.getMostRecentPrices(auth_token, stock_name, date, price_date, stockPricesList)
         ###
 
         stockPricesList.append(["S+P", "Type in price"])
