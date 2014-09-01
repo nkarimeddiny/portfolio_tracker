@@ -148,7 +148,7 @@ class MainHandler(webapp2.RequestHandler):
         #as their most recently available price and the date for that price
         stockPricesList = []
         mystocks = db.GqlQuery("SELECT * FROM Stock WHERE username = :1", str(username))
-        auth_token = 
+        auth_token = "auth_token=UQyxTU4BY5osYsTTqpRd"
         #dates are being given to getMostRecentPrices() in arrays so that if method is called recursively to go back to
         #previous dates, these dates will be changed on the heap. As a result, the second stock and on will not need recursive
         #calls, but will first check the correct date
