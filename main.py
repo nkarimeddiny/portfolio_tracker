@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 import webapp2, jinja2, urllib, requests
-import re, os, cgi
+import re, os, cgi, logging
 from google.appengine.ext import db
 from google.appengine.api import users
 from datetime import datetime, timedelta
@@ -54,31 +54,36 @@ class MainHandler(webapp2.RequestHandler):
         url_part2 = ".json?" + auth_token + "&column=4&sort_order=asc&collapse=daily&trim_start=" + str(date[0]) + "&trim_end=" + str(date[0])
         url = url_part1 + url_part2
         r = None
-        r = requests.get(url)
-        if r is not None:
-          try:
-              data = r.json() 
-              ##to see the keys:
-              ##self.response.write(data.keys());
-              try:
-                stockPricesList.append([stock_name, data[u'data'][0][1]])
-                price_date[0] = format(date[0], '%Y-%m-%d')
+        try:
+          r = requests.get(url)
+          if r is not None:
+            try:
+                data = r.json() 
+                ##to see the keys:
+                ##self.response.write(data.keys());
+                try:
+                  stockPricesList.append([stock_name, data[u'data'][0][1]])
+                  price_date[0] = format(date[0], '%Y-%m-%d')
 
-              except IndexError: #today's stock prices not available, so go back one day and make recursive method call
-                yearmonthdayInStackFrame = date[0]
-                current_datetime = datetime.now() + timedelta(hours = -4)
-                current_date = current_datetime.date()
-                #the following conditional is to prevent more than 5 recursive calls from being made
-                if (current_date - yearmonthdayInStackFrame < timedelta(days = 5)):
-                   date[0] = date[0] + timedelta(days = -1)
-                   self.getMostRecentPrices(auth_token, stock_name, date, price_date, stockPricesList)
-                else:
-                   self.response.write("<h1>Error loading data. Please try again later</h1>")
-              except TypeError:
-                self.response.write("<h1>Error loading data. Please try again later</h1>")
-          except KeyError:
-                stockPricesList.append([stock_name, "NA"])
-                price_date[0] = format(date[0], '%Y-%m-%d')
+                except IndexError: #today's stock prices not available, so go back one day and make recursive method call
+                  dateInStackFrame = date[0]
+                  current_datetime = datetime.now() + timedelta(hours = -4)
+                  current_date = current_datetime.date()
+                  #the following conditional is to prevent more than 5 recursive calls from being made
+                  if (current_date - dateInStackFrame < timedelta(days = 5)):
+                     date[0] = date[0] + timedelta(days = -1)
+                     self.getMostRecentPrices(auth_token, stock_name, date, price_date, stockPricesList)
+                  else:
+                     self.response.write("<h1>Error loading data. Please try again later</h1>")
+                except TypeError:
+                  self.response.write("<h1>Error loading data. Please try again later</h1>")
+            except KeyError:
+                  stockPricesList.append([stock_name, "NA"])
+                  price_date[0] = format(date[0], '%Y-%m-%d')
+          else:
+            self.response.write("<h1>Error loading data. Please try again later</h1>")
+        except:
+          self.response.write("<h1>Error loading data for " + stock_name + ". Please try again later</h1>")
 
     #This retrieves historical portfolio data, from the database, for a particular user. When first
     #logging onto the site, the default is to show the most recent portfolio data, but the user can
