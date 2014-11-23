@@ -58,25 +58,31 @@ class MainHandler(webapp2.RequestHandler):
           r = requests.get(url)
           if r is not None:
             try:
-                data = r.json() 
-                ##to see the keys:
-                ##self.response.write(data.keys());
-                try:
-                  stockPricesList.append([stock_name, data[u'data'][0][1]])
-                  price_date[0] = format(date[0], '%Y-%m-%d')
+              
+              data = r.json() 
 
-                except IndexError: #today's stock prices not available, so go back one day and make recursive method call
-                  dateInStackFrame = date[0]
-                  current_datetime = datetime.now() + timedelta(hours = -4)
-                  current_date = current_datetime.date()
-                  #the following conditional is to prevent more than 5 recursive calls from being made
-                  if (current_date - dateInStackFrame < timedelta(days = 5)):
-                     date[0] = date[0] + timedelta(days = -1)
-                     self.getMostRecentPrices(auth_token, stock_name, date, price_date, stockPricesList)
-                  else:
-                     self.response.write("<h1>Error loading data. Please try again later</h1>")
-                except TypeError:
+              try:
+              
+                stockPricesList.append([stock_name, data[u'data'][0][1]])
+                price_date[0] = format(date[0], '%m/%d/%Y')
+
+              except IndexError: #today's stock prices not available, 
+              #so go back one day and make recursive method call
+              
+                dateInStackFrame = date[0]
+                current_datetime = datetime.now() + timedelta(hours = -4)
+                current_date = current_datetime.date()
+              
+                #the following conditional is to prevent more than 5 recursive calls from being made
+                if (current_date - dateInStackFrame < timedelta(days = 5)):
+                  
+                  date[0] = date[0] + timedelta(days = -1)
+                  self.getMostRecentPrices(auth_token, stock_name, date, price_date, stockPricesList)
+              
+                else:
                   self.response.write("<h1>Error loading data. Please try again later</h1>")
+              except TypeError:
+                self.response.write("<h1>Error loading data. Please try again later</h1>")
             except KeyError:
                   stockPricesList.append([stock_name, "NA"])
                   price_date[0] = format(date[0], '%Y-%m-%d')
@@ -93,16 +99,16 @@ class MainHandler(webapp2.RequestHandler):
         stock_listings = db.GqlQuery("SELECT * FROM StockListing2 WHERE username = :1", str(username))
         for stock_listing in stock_listings:
           set_of_dates.add(stock_listing.date)
-        list_of_dates = list(set_of_dates)
-        list_of_dates.sort(reverse = True)
+        datesListFromSet = list(set_of_dates)
+        datesListFromSet.sort(reverse = True)
         
-        if list_of_dates:
+        if datesListFromSet:
 
           if date_to_feature == "most_recent":
             #old_listings are stocks from the most recently saved date in this case
-            old_listings = db.GqlQuery("SELECT * FROM StockListing2 WHERE username = :1 AND date =:2", str(username), list_of_dates[0])
+            old_listings = db.GqlQuery("SELECT * FROM StockListing2 WHERE username = :1 AND date =:2", str(username), datesListFromSet[0])
             #old_total_holding is total value from the most recently saved data
-            old_total_holding = db.GqlQuery("SELECT * FROM TotalHolding WHERE username = :1 AND date =:2", str(username), list_of_dates[0])
+            old_total_holding = db.GqlQuery("SELECT * FROM TotalHolding WHERE username = :1 AND date =:2", str(username), datesListFromSet[0])
 
           else: #date_to_feature is a date selected by the user
               #old_listings are stocks from the date the user has requested in this case
@@ -114,7 +120,15 @@ class MainHandler(webapp2.RequestHandler):
               oldDate_total_amount = holding.amount
  
           for listing in old_listings:
-              listingsList.append([str(listing.stock_name), listing.date, listing.price, listing.dollar_value])
+              listingDate = str(listing.date)
+              formattedDate = listingDate[4:6] + "/" + listingDate[6:] + "/" + listingDate[0:4]
+              if formattedDate[0] == "0" and formattedDate[3] == "0":
+                formattedDate = formattedDate[1:3] + formattedDate[4:]
+              elif formattedDate[3] == "0":
+                formattedDate = formattedDate[0:3] + formattedDate[4:]
+              elif formattedDate[0] == "0":
+                formattedDate = formattedDate[1:]
+              listingsList.append([str(listing.stock_name), formattedDate, listing.price, listing.dollar_value])
           
           return oldDate_total_amount
 
@@ -171,8 +185,21 @@ class MainHandler(webapp2.RequestHandler):
         stockPricesList = sorted(stockPricesList, key = itemgetter(0))
 
         list_of_dates = list(set_of_dates)
+        list_of_dates.sort(reverse = True)
+        dateList = []
+        for date in list_of_dates:
+          date = str(date)
+          formattedDate = date[4:6] + "/" + date[6:] + "/" + date[0:4]
+          if formattedDate[0] == "0" and formattedDate[3] == "0":
+            formattedDate = formattedDate[1:3] + formattedDate[4:]
+          elif formattedDate[3] == "0":
+            formattedDate = formattedDate[0:3] + formattedDate[4:]
+          elif formattedDate[0] == "0":
+            formattedDate = formattedDate[1:]
+          dateList.append({"yearmonthday": date, "formattedDate": formattedDate})
 
-        template_values = {"listings": listingsList,"stock_prices": stockPricesList, "list_of_dates": list_of_dates, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_total_amount, "price_date": price_date[0]}
+
+        template_values = {"listings": listingsList,"stock_prices": stockPricesList, "list_of_dates": dateList, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_total_amount, "price_date": price_date[0]}
         template = jinja_environment.get_template('index.html')
         self.response.write(template.render(template_values))
    
