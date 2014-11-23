@@ -94,13 +94,7 @@ class MainHandler(webapp2.RequestHandler):
     #This retrieves historical portfolio data, from the database, for a particular user. When first
     #logging onto the site, the default is to show the most recent portfolio data, but the user can
     #then select a particular date to see the portfolio data from that date.
-    def getOldData(self, listingsList, set_of_dates, username, date, date_to_feature, oldDate):
-
-        stock_listings = db.GqlQuery("SELECT * FROM StockListing2 WHERE username = :1", str(username))
-        for stock_listing in stock_listings:
-          set_of_dates.add(stock_listing.date)
-        datesListFromSet = list(set_of_dates)
-        datesListFromSet.sort(reverse = True)
+    def getOldData(self, listingsList, datesListFromSet, username, date, date_to_feature, oldDate):
         
         if datesListFromSet:
 
@@ -157,14 +151,20 @@ class MainHandler(webapp2.RequestHandler):
         listingsList = []
         set_of_dates = set()
 
+        stock_listings = db.GqlQuery("SELECT * FROM StockListing2 WHERE username = :1", str(username))
+        for stock_listing in stock_listings:
+          set_of_dates.add(stock_listing.date)
+        datesListFromSet = list(set_of_dates)
+        datesListFromSet.sort(reverse = True)
+
         if get_or_post == "get":
            #this method appends to listingsList the stock listings from the most recent date that portfolio data was saved,
            #and returns the total portfolio value from that date. It also adds to set_of_dates all dates on which portfolio data was saved
-           oldDate_total_amount = self.getOldData(listingsList, set_of_dates, username, dateArray[0], "most_recent", None)
+           oldDate_total_amount = self.getOldData(listingsList, datesListFromSet, username, dateArray[0], "most_recent", None)
         else:  #if get_or_post == "post"
            #this method appends to listingsList the stock listings from a date the user has requested, and returns the total portfolio value from that date.
            #It also adds to set_of_dates all dates on which portfolio data was saved
-           oldDate_total_amount = self.getOldData(listingsList, set_of_dates, username, dateArray[0], "old_date", oldDate)
+           oldDate_total_amount = self.getOldData(listingsList, datesListFromSet, username, dateArray[0], "old_date", oldDate)
 
         #the following section (until ###) is for producing a list (stockPricesList) with all stocks in the user's portfolio, as well
         #as their most recently available price and the date for that price
@@ -187,15 +187,13 @@ class MainHandler(webapp2.RequestHandler):
         listingsList = sorted(listingsList, key = itemgetter(0)) 
         stockPricesList = sorted(stockPricesList, key = itemgetter(0))
 
-        list_of_dates = list(set_of_dates)
-        list_of_dates.sort(reverse = True)
-        dateList = []
-        for aDate in list_of_dates:
+        dateListForTemplate = []
+        for aDate in datesListFromSet:
           formattedDate = self.formatDate(str(aDate));
-          dateList.append({"yearmonthday": aDate, "formattedDate": formattedDate})
+          dateListForTemplate.append({"yearmonthday": aDate, "formattedDate": formattedDate})
 
 
-        template_values = {"listings": listingsList, "stock_prices": stockPricesList, "list_of_dates": dateList, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_total_amount, "formatted_price_date": price_date[0] ,"price_date": date[0]}
+        template_values = {"listings": listingsList, "stock_prices": stockPricesList, "list_of_dates": dateListForTemplate, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_total_amount, "formatted_price_date": price_date[0] ,"price_date": date[0]}
         template = jinja_environment.get_template('index.html')
         self.response.write(template.render(template_values))
    
