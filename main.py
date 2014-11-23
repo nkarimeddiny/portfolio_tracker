@@ -50,7 +50,7 @@ class MainHandler(webapp2.RequestHandler):
     #date is already set appropriately for finding the prices of the other stocks in the portfolio 
     def getMostRecentPrices(self, auth_token, stock_name, date, price_date, stockPricesList):
 
-        url_part1 = "http://www.quandl.com/api/v1/datasets/WIKI/" + stock_name
+        url_part1 = "https://www.quandl.com/api/v1/datasets/WIKI/" + stock_name
         url_part2 = ".json?" + auth_token + "&column=4&sort_order=asc&collapse=daily&trim_start=" + str(date[0]) + "&trim_end=" + str(date[0])
         url = url_part1 + url_part2
         r = None
@@ -170,7 +170,7 @@ class MainHandler(webapp2.RequestHandler):
         #as their most recently available price and the date for that price
         stockPricesList = []
         mystocks = db.GqlQuery("SELECT * FROM Stock WHERE username = :1", str(username))
-        auth_token;
+        auth_token 
         #dates are being given to getMostRecentPrices() in arrays so that if method is called recursively to go back to
         #previous dates, these dates will be changed on the heap. As a result, the second stock and on will not need recursive
         #calls, but will first check the correct date
