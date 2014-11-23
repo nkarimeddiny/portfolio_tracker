@@ -85,7 +85,7 @@ class MainHandler(webapp2.RequestHandler):
                 self.response.write("<h1>Error loading data. Please try again later</h1>")
             except KeyError:
                   stockPricesList.append([stock_name, "NA"])
-                  price_date[0] = format(date[0], '%Y-%m-%d')
+                  price_date[0] = format(date[0], '%m/%d/%Y')
           else:
             self.response.write("<h1>Error loading data. Please try again later</h1>")
         except:
@@ -120,14 +120,7 @@ class MainHandler(webapp2.RequestHandler):
               oldDate_total_amount = holding.amount
  
           for listing in old_listings:
-              listingDate = str(listing.date)
-              formattedDate = listingDate[4:6] + "/" + listingDate[6:] + "/" + listingDate[0:4]
-              if formattedDate[0] == "0" and formattedDate[3] == "0":
-                formattedDate = formattedDate[1:3] + formattedDate[4:]
-              elif formattedDate[3] == "0":
-                formattedDate = formattedDate[0:3] + formattedDate[4:]
-              elif formattedDate[0] == "0":
-                formattedDate = formattedDate[1:]
+              formattedDate = self.formatDate(str(listing.date))
               listingsList.append([str(listing.stock_name), formattedDate, listing.price, listing.dollar_value])
           
           return oldDate_total_amount
@@ -136,9 +129,19 @@ class MainHandler(webapp2.RequestHandler):
 
         raw_date = datetime.now() + timedelta(hours = -4) #for EST
         date = raw_date.date()
-        dateToDisplay = format(date, '%Y-%m-%d')
+        dateToDisplay = format(date, '%m/%d/%Y')
         yearmonthday = format(date, '%Y%m%d')
         return [date, dateToDisplay]
+    
+    def formatDate(self, dateString):
+        formattedDate = dateString[4:6] + "/" + dateString[6:] + "/" + dateString[0:4]
+        if formattedDate[0] == "0" and formattedDate[3] == "0":
+          formattedDate = formattedDate[1:3] + formattedDate[4:]
+        elif formattedDate[3] == "0":
+          formattedDate = formattedDate[0:3] + formattedDate[4:]
+        elif formattedDate[0] == "0":
+          formattedDate = formattedDate[1:]
+        return formattedDate
 
     def getUsername(self):
 
@@ -187,19 +190,12 @@ class MainHandler(webapp2.RequestHandler):
         list_of_dates = list(set_of_dates)
         list_of_dates.sort(reverse = True)
         dateList = []
-        for date in list_of_dates:
-          date = str(date)
-          formattedDate = date[4:6] + "/" + date[6:] + "/" + date[0:4]
-          if formattedDate[0] == "0" and formattedDate[3] == "0":
-            formattedDate = formattedDate[1:3] + formattedDate[4:]
-          elif formattedDate[3] == "0":
-            formattedDate = formattedDate[0:3] + formattedDate[4:]
-          elif formattedDate[0] == "0":
-            formattedDate = formattedDate[1:]
-          dateList.append({"yearmonthday": date, "formattedDate": formattedDate})
+        for aDate in list_of_dates:
+          formattedDate = self.formatDate(str(aDate));
+          dateList.append({"yearmonthday": aDate, "formattedDate": formattedDate})
 
 
-        template_values = {"listings": listingsList,"stock_prices": stockPricesList, "list_of_dates": dateList, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_total_amount, "price_date": price_date[0]}
+        template_values = {"listings": listingsList, "stock_prices": stockPricesList, "list_of_dates": dateList, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_total_amount, "formatted_price_date": price_date[0] ,"price_date": date[0]}
         template = jinja_environment.get_template('index.html')
         self.response.write(template.render(template_values))
    
