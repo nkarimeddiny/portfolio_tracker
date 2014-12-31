@@ -184,7 +184,7 @@ class MainHandler(webapp2.RequestHandler):
               price_date = stockPricesDict["price_date"]
         ###
 
-        formatted_price_date = format(price_date, '%m/%d/%Y')
+        formatted_price_date = self.formatDate(str(price_date));
         stockPricesList.append(["S+P", "Type in price"])
 
         #sort oldListings and stockPricesList alphabetically
