@@ -43,15 +43,13 @@ class StockListing2(db.Model):
 
 class MainHandler(webapp2.RequestHandler):
 
-    #This retrieves the most current prices available for stocks in the user's portfolio. Recursive
-    #calls are made to go back to previous dates. date and price_date are lists (and therefore
-    #on the heap). date is needed for the api call, and price_date will be displayed to the user. 
-    #Recursive calls are only needed for the first stock in the portfolio; once the prices are found, 
-    #date is already set appropriately for finding the prices of the other stocks in the portfolio 
-    def getMostRecentPrices(self, auth_token, stock_name, date, price_date, stockPricesList):
-
+    #retrieves the most current price available for a stock in the user's portfolio. Recursive
+    #calls are made to go back to previous dates. Recursive calls are only needed for the first stock 
+    #in the portfolio; once the price is found, date is already set appropriately for finding the 
+    #prices of the other stocks in the portfolio 
+    def getMostRecentPrice(self, auth_token, stock_name, date, stockPricesList):
         url_part1 = "https://www.quandl.com/api/v1/datasets/WIKI/" + stock_name
-        url_part2 = ".json?" + auth_token + "&column=4&sort_order=asc&collapse=daily&trim_start=" + str(date[0]) + "&trim_end=" + str(date[0])
+        url_part2 = ".json?" + auth_token + "&column=4&sort_order=asc&collapse=daily&trim_start=" + str(date) + "&trim_end=" + str(date)
         url = url_part1 + url_part2
         r = None
         try:
@@ -64,20 +62,20 @@ class MainHandler(webapp2.RequestHandler):
               try:
               
                 stockPricesList.append([stock_name, data[u'data'][0][1]])
-                price_date[0] = format(date[0], '%m/%d/%Y')
+                return {"stockPricesList" : stockPricesList, "price_date" : date}
 
               except IndexError: #today's stock prices not available, 
               #so go back one day and make recursive method call
               
-                dateInStackFrame = date[0]
+                dateInStackFrame = date
                 current_datetime = datetime.now() + timedelta(hours = -4)
                 current_date = current_datetime.date()
               
                 #the following conditional is to prevent more than 5 recursive calls from being made
                 if (current_date - dateInStackFrame < timedelta(days = 5)):
                   
-                  date[0] = date[0] + timedelta(days = -1)
-                  self.getMostRecentPrices(auth_token, stock_name, date, price_date, stockPricesList)
+                  date = date + timedelta(days = -1)
+                  return self.getMostRecentPrice(auth_token, stock_name, date, stockPricesList)
               
                 else:
                   self.response.write("<h1>Error loading data. Please try again later</h1>")
@@ -85,7 +83,7 @@ class MainHandler(webapp2.RequestHandler):
                 self.response.write("<h1>Error loading data. Please try again later</h1>")
             except KeyError:
                   stockPricesList.append([stock_name, "NA"])
-                  price_date[0] = format(date[0], '%m/%d/%Y')
+                  return {"stockPricesList" : stockPricesList, "price_date" : date}
           else:
             self.response.write("<h1>Error loading data. Please try again later</h1>")
         except:
@@ -172,19 +170,21 @@ class MainHandler(webapp2.RequestHandler):
 
         #the following section (until ###) is for producing a list (stockPricesList) with all stocks in the user's portfolio, as well
         #as their most recently available price and the date for that price
-        stockPricesList = []
-        mystocks = db.GqlQuery("SELECT * FROM Stock WHERE username = :1", str(username))
+        mystocks = db.GqlQuery("SELECT stock_name FROM Stock WHERE username = :1", str(username))
         auth_token = "auth_token=UQyxTU4BY5osYsTTqpRd"
-        #dates are being given to getMostRecentPrices() in arrays so that if method is called recursively to go back to
-        #previous dates, these dates will be changed on the heap. As a result, the second stock and on will not need recursive
-        #calls, but will first check the correct date
-        date =  [dateArray[0]]
-        price_date = [dateArray[1]]
+        stockPricesList = []
+        price_date = dateArray[0]
         for stock in mystocks:
             stock_name = stock.stock_name
-            self.getMostRecentPrices(auth_token, stock_name, date, price_date, stockPricesList)
+            #first date passed into method call is current date, but if recursive calls are needed to find
+            #the first stock's price, price_date will be changed
+            stockPricesDict = self.getMostRecentPrice(auth_token, stock_name, price_date, stockPricesList)
+            if stockPricesDict:
+              stockPricesList = stockPricesDict["stockPricesList"]
+              price_date = stockPricesDict["price_date"]
         ###
 
+        formatted_price_date = format(price_date, '%m/%d/%Y')
         stockPricesList.append(["S+P", "Type in price"])
 
         #sort oldListings and stockPricesList alphabetically
@@ -197,7 +197,7 @@ class MainHandler(webapp2.RequestHandler):
           dateListForTemplate.append({"yearmonthday": aDate, "formattedDate": formattedDate})
 
 
-        template_values = {"listings": oldListings, "stock_prices": stockPricesList, "list_of_dates": dateListForTemplate, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_dict["total_amount"], "formatted_price_date": price_date[0] ,"price_date": date[0]}
+        template_values = {"listings": oldListings, "stock_prices": stockPricesList, "list_of_dates": dateListForTemplate, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_dict["total_amount"], "formatted_price_date": formatted_price_date ,"price_date": price_date}
         template = jinja_environment.get_template('index.html')
         self.response.write(template.render(template_values))
    
