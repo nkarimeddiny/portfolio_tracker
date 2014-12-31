@@ -91,10 +91,10 @@ class MainHandler(webapp2.RequestHandler):
         except:
           self.response.write("<h1>Error loading data for " + stock_name + ". Please try again later</h1>")
 
-    #This retrieves historical portfolio data, from the database, for a particular user. When first
+    #retrieves historical portfolio data, from the database, for a particular user. When first
     #logging onto the site, the default is to show the most recent portfolio data, but the user can
     #then select a particular date to see the portfolio data from that date.
-    def getOldData(self, oldListings, oldDate, username, date_to_feature):
+    def getOldData(self, oldDate, username, date_to_feature):
         
         if date_to_feature == "most_recent":
           #old_listings_object has stocks from the most recently saved date in this case
@@ -111,11 +111,15 @@ class MainHandler(webapp2.RequestHandler):
         for holding in old_total_holding:
             oldDate_total_amount = holding.amount
 
+        oldListings = []
+
         for listing in old_listings_object:
             formattedDate = self.formatDate(str(listing.date))
             oldListings.append([str(listing.stock_name), formattedDate, listing.price, listing.dollar_value])
         
-        return oldDate_total_amount
+        oldDate_dict = {"total_amount" : oldDate_total_amount, "oldListings": oldListings}
+
+        return oldDate_dict
 
     #dates when the user saved stock prices are retrieved and added to a set (eliminating duplication).
     #Set of dates then converted to list and sorted
@@ -157,18 +161,14 @@ class MainHandler(webapp2.RequestHandler):
     #mainMethod is called by either the get or post method
     def mainMethod(self, username, dateArray, logout, oldDate, get_or_post):
 
-        oldListings = []
-
         saved_stock_dates = self.getSavedStockDates(username);
 
         if get_or_post == "get":
-           #this method appends to oldListings the stock listings from the most recent date that portfolio data was saved,
-           #and returns the total portfolio value from that date
-           oldDate_total_amount = self.getOldData(oldListings, saved_stock_dates[0], username, "most_recent")
+           #returns stock listings and total portfolio value from the most recent date that portfolio data was saved,
+           oldDate_dict = self.getOldData(saved_stock_dates[0], username, "most_recent")
         else:  #if get_or_post == "post"
-           #this method appends to oldListings the stock listings from a date the user has requested, 
-           #and returns the total portfolio value from that date.
-           oldDate_total_amount = self.getOldData(oldListings, oldDate, username, "old_date")
+           #returns stock listings and total portfolio value from a date the user has requested
+           oldDate_dict = self.getOldData(oldDate, username, "old_date")
 
         #the following section (until ###) is for producing a list (stockPricesList) with all stocks in the user's portfolio, as well
         #as their most recently available price and the date for that price
@@ -188,7 +188,7 @@ class MainHandler(webapp2.RequestHandler):
         stockPricesList.append(["S+P", "Type in price"])
 
         #sort oldListings and stockPricesList alphabetically
-        oldListings = sorted(oldListings, key = itemgetter(0)) 
+        oldListings = sorted(oldDate_dict["oldListings"], key = itemgetter(0)) 
         stockPricesList = sorted(stockPricesList, key = itemgetter(0))
 
         dateListForTemplate = []
@@ -197,7 +197,7 @@ class MainHandler(webapp2.RequestHandler):
           dateListForTemplate.append({"yearmonthday": aDate, "formattedDate": formattedDate})
 
 
-        template_values = {"listings": oldListings, "stock_prices": stockPricesList, "list_of_dates": dateListForTemplate, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_total_amount, "formatted_price_date": price_date[0] ,"price_date": date[0]}
+        template_values = {"listings": oldListings, "stock_prices": stockPricesList, "list_of_dates": dateListForTemplate, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_dict["total_amount"], "formatted_price_date": price_date[0] ,"price_date": date[0]}
         template = jinja_environment.get_template('index.html')
         self.response.write(template.render(template_values))
    
