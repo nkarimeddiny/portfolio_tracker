@@ -1,0 +1,124 @@
+body{
+  font-family: arial;
+}
+
+a{
+  color: black;
+}
+
+#content{
+  overflow: hidden;
+  background-color: #505457;
+}
+
+#heading{
+  width: 400px;
+  background-color: #5aa5b8;
+  border-radius: 5px;
+  margin: 10px;
+  padding: 10px;
+}
+
+#stockentry{
+  background-color: #b8bdc2;
+  width: 400px;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+#errorMessage{
+  background-color: red;
+  width: 400px;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.past_info{
+   margin-top: 10px;
+   float: left;
+   border: 1px solid black;
+}
+
+.current_info{
+   margin-top: 10px;
+   float: left;
+   margin-left: 20px;
+   border: 1px solid black;
+}
+
+#scrollbox{
+  float: left;
+  border: 1px solid black;
+  height: 100px;
+  width: 100px;
+  margin-top: 10px;
+  padding: 10px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+
+#bothTables{
+  overflow: hidden;
+  width: 1200px;
+  margin: 10px;
+}
+
+table{
+  background-color: #b8bdc2;
+  border-radius: 5px;
+}
+
+.dateColumn {
+  padding-right: 10px;
+}
+
+.priceColumn {
+  padding-right: 10px;
+}
+
+.tickerColumn {
+  padding-right: 10px;
+}
+
+.olddates{
+  margin: 5px;
+}
+
+.olddates:hover{
+  color: blue;
+  cursor: pointer;
+}
+
+#otherDatesAndCaption{
+  float: left;
+  margin: 10px;
+  padding: 5px;
+  background-color: #b8bdc2;
+  border-radius: 5px;
+}
+
+
+.arrow {
+  width: 20px;
+  height: 20px;
+}
+
+
+.green {
+  width: 0;
+  height: 0;
+  border-left:  9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 9px solid green;
+}
+
+.red {
+  width: 0; 
+  height: 0; 
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 9px solid #f00;
+}

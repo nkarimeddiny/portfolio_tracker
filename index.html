@@ -1,0 +1,129 @@
+ 
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Stocks</title>
+  <meta charset="utf-8">
+  <meta name= "viewport" content="width=device-width">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="javascript.js"></script>
+</head>
+<body>
+<div id="content">
+<form id= "myForm" method = "post" action="">
+
+<div id="heading">
+<span>Hello, {{username + ". "}}<a href="{{logout}}">Logout</a></span> <br/><br/>
+<span>New data is available shortly after 5:00pm<br/>on a day the market is open.</span> <br/>
+</div>
+
+<div id="stockentry" class="stockbox">
+
+  Add a stock to your portfolio. Enter ticker symbol:<br/>
+  <input name = "new_stock" type="text" value="">
+  <input type = "submit" value = "submit">
+  <input id="deleteStock" type="hidden" name="deleteStock" value="">
+
+<div id="submitbuttondiv">
+<input id="submitbutton" type="submit" value="Click to confirm">
+</div>
+
+</div>
+
+<div id="errorMessage">
+  Type in dollar values manually
+</div>
+
+<div id="bothTables">
+<table class = "stockbox past_info">
+<tr>
+  <td>Ticker<br/>symbol</td>
+  <td>Date</td>
+  <td>Price</td>
+  <td>Dollar<br/>value</td>
+</tr>  
+{% for listing in listings%}
+<tr class="mystocks">
+   <td class="oldListedStock">{{listing[0]}}</td> 
+   <td class = "dateColumn">{{listing[1]}}</td>
+   <td class = "priceColumn">{{listing[2]}}</td>
+   <td>{{listing[3]}}</td>
+   <input class = "oldprice" type="hidden" value="{{listing[2]}}">
+   <input class = "oldvalue" type="hidden" value="{{listing[3]}}">
+</tr>
+{% endfor %}
+<tr>
+  <td>Total Holdings:
+  {%if total_holding%}
+   {{total_holding}}
+  {%endif%}
+  </td>
+</tr> 
+</table>
+
+<table class = "stockbox current_info">
+  <tr>
+    <td class="tickerColumn">Ticker<br/>symbol</td>
+    <td>{{formatted_price_date}}<br/>closing price</td>
+    <input type = "hidden" name = "price_date" value = "{{price_date}}">
+    <td>Dollar<br/>value</td>
+    <td></td>
+    <td>Percent<br/>change</td>
+{% for stock in stock_prices %}
+<tr class="mystocks">
+  <td class="newListedStock">{{stock[0]}}</td> 
+  {% if stock[0] == "S+P"%}
+  <td> <input id= "s_and_p" name = "current_price" class="current_price" size="12" maxlength="12" type="text" value="{{stock[1]}}"></td> 
+  <td><input name = "dollar_value" class="dollar_value" id="voo" type="text" size="10" maxlength="10" value=""></td>
+  <td><div class = "arrow"></div></td> 
+  <td><input type= "text" class = "percent_change" size="3" maxlength="3"></td>
+  <input name = "listed_stock" class = "listedStock" type="hidden" value="{{stock[0]}}">
+  {%else%}
+  <td class = "newset">{{stock[1]}}</td> 
+  <input name = "current_price" class="current_price" type="hidden" value="{{stock[1]}}">
+  <td><input name = "dollar_value" class="dollar_value indiv_stock" type="text" size="10" maxlength="10"></td>
+  <td> <div class = "arrow"></div> </td>
+  <td><input type= "text" class = "percent_change" size="3" maxlength="3"></td>
+  <td class="deletebuttonarea">
+  <!-- when click on .deletebutton (below), value is extracted from .listedStock input. This value is then added to #deleteStock, which is a hidden input element in the form higher up on page. Into the .deletebuttonarea, #submittbuttondiv is appended, and show() method is called. When #submitbutton (in #submitbuttondiv) is clicked, data is sent to the server-->
+      <input type ="button" class="deletebutton" value="Delete">
+      <!--following input is in deletebuttonarea to help with JavaScript code for deleting a stock -->
+      <input name = "listed_stock" class = "listedStock" type="hidden" value="{{stock[0]}}">
+  </td>
+  {% endif %}
+  <div></div>
+
+</tr>
+{% endfor %}
+<tr>
+  <td><button type="button" style="text-align:left;width:260px;height:50px;" id="calculate">Calculate current dollar values (if no changes 
+    have been made to portfolio since last saved)</button></td>
+</tr>
+<tr>
+  <td><input type="button" id="calculateTotal" value="Calculate total holdings"><br/></td>
+  <td>Total Holdings: <input name = "total_holding" id="totalHoldings" type="text" > </td>
+</tr> 
+<tr>
+  <td><input type ="submit" id="savebutton" name="savebutton" value="Save stock data (unless any closing prices are NA)"> <br/></td>
+</tr> 
+</table>
+</div>
+
+<div id="otherDatesAndCaption">
+<div id="otherdates">All dates with<br/>stock listings:</div> 
+<div id="scrollbox">
+{%for date in list_of_dates%}
+<div data-yearmonthday = "{{date.yearmonthday}}" class="olddates">{{date.formattedDate}}</div>
+{%endfor%}
+</div>
+</div>
+<input type = "hidden" id = "oldDate" name = "oldDate" value="">
+</form>
+
+</div>
+
+
+
+</body>
+</html>
