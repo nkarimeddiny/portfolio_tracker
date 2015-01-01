@@ -242,13 +242,13 @@ class MainHandler(webapp2.RequestHandler):
             dollar_values = self.request.get_all("dollar_value")
             listed_stocks = self.request.get_all("listed_stock")
             current_prices = self.request.get_all("current_price")
-            total_amount = self.request.get_all("total_holding")
+            total_amount = self.request.get("total_holding")
             price_date = self.request.get("price_date")
             price_date = price_date.replace("-","")
             
             total_amount_added = False
             try:
-              total_amount = float(total_amount[0])
+              total_amount = float(total_amount)
               e = TotalHolding(username = str(username), date = int(price_date), amount = total_amount)
               e.put()
               total_amount_added = True
@@ -271,14 +271,22 @@ class MainHandler(webapp2.RequestHandler):
                      current_prices_converted = True
                    except:
                      pass
-                   if current_prices_converted:  
+                   if current_prices_converted:
+                     data_saved = False  
                      try:
                         e = StockListing2(username = str(username), date = int(price_date), stock_name = listed_stock, price = price , dollar_value = dollar_value )
                         e.put()
                         count += 1
+                        data_saved = True
                      except ValueError:
                        pass
-                     self.redirect("/")
+                     if data_saved:
+                       if count + 1 == len(listed_stocks):
+                         self.redirect("/")
+                       else:
+                         pass
+                     else:
+                       self.response.write("<h1>Error saving data. Please try again.</h1>")  
                    else:
                      self.response.write("<h1>Error saving data. Please try again.</h1>")  
                  else:
