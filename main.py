@@ -160,10 +160,12 @@ class MainHandler(webapp2.RequestHandler):
     def mainMethod(self, username, dateArray, logout, oldDate, get_or_post):
 
         saved_stock_dates = self.getSavedStockDates(username);
+        oldDate_dict = {}
 
         if get_or_post == "get":
-           #returns stock listings and total portfolio value from the most recent date that portfolio data was saved,
-           oldDate_dict = self.getOldData(saved_stock_dates[0], username, "most_recent")
+           if saved_stock_dates:
+             #returns stock listings and total portfolio value from the most recent date that portfolio data was saved,
+             oldDate_dict = self.getOldData(saved_stock_dates[0], username, "most_recent")
         else:  #if get_or_post == "post"
            #returns stock listings and total portfolio value from a date the user has requested
            oldDate_dict = self.getOldData(oldDate, username, "old_date")
@@ -186,9 +188,17 @@ class MainHandler(webapp2.RequestHandler):
 
         formatted_price_date = format(price_date, '%m/%d/%Y')
         stockPricesList.append(["S+P", "Type in price"])
+        
+        if oldDate_dict.get("total_amount"):
+          total_amount = oldDate_dict["total_amount"]
+        else:
+          total_amount = None
 
         #sort oldListings and stockPricesList alphabetically
-        oldListings = sorted(oldDate_dict["oldListings"], key = itemgetter(0)) 
+        if oldDate_dict.get("oldListings"):
+          oldListings = sorted(oldDate_dict["oldListings"], key = itemgetter(0))
+        else:
+           oldListings = []   
         stockPricesList = sorted(stockPricesList, key = itemgetter(0))
 
         dateListForTemplate = []
@@ -197,7 +207,7 @@ class MainHandler(webapp2.RequestHandler):
           dateListForTemplate.append({"yearmonthday": aDate, "formattedDate": formattedDate})
 
 
-        template_values = {"listings": oldListings, "stock_prices": stockPricesList, "list_of_dates": dateListForTemplate, "username":str(username.nickname()), "logout":logout, "total_holding" : oldDate_dict["total_amount"], "formatted_price_date": formatted_price_date ,"price_date": price_date}
+        template_values = {"listings": oldListings, "stock_prices": stockPricesList, "list_of_dates": dateListForTemplate, "username":str(username.nickname()), "logout":logout, "total_holding" : total_amount, "formatted_price_date": formatted_price_date ,"price_date": price_date}
         template = jinja_environment.get_template('index.html')
         self.response.write(template.render(template_values))
    
