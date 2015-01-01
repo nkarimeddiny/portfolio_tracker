@@ -268,23 +268,23 @@ class MainHandler(webapp2.RequestHandler):
             if total_amount_saved:
               count = 0
               for listed_stock in listed_stocks:
-                valid_data = False
+                data_saved = False
                 try:
                   dollar_value = float(dollar_values[count]) 
                   price = float(current_prices[count])
-                  valid_data = True
-                except:
-                  pass
-                if valid_data:
                   e = StockListing2(username = str(username), date = int(price_date), stock_name = listed_stock, price = price , dollar_value = dollar_value )
                   e.put()
+                  data_saved = True
                   count += 1
+                except:
+                  pass
+                if data_saved:
+                  if count + 1 == len(listed_stocks):
+                    self.redirect("/")
+                  else:
+                    pass
                 else:
                   self.response.write("<h1>Error saving data. Please try again.</h1>")
-                if count + 1 == len(listed_stocks):
-                  self.redirect("/")
-                else:
-                  pass
             else:
               self.response.write("<h1>Error saving data. Please try again.</h1>")
 
