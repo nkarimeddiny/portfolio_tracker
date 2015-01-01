@@ -7,9 +7,9 @@ Some details about how the app works:
 
 When a user accesses the site, mainMethod retrieves the dates for which the user has saved portfolio data. The most recent date is passed to the getOldData method. getOldData returns the user’s stock listings from that date, and the total value of their stocks on that date. 
 
-Names of stocks that are currently in the user’s portfolio are then retrieved, and getMostRecentPrice is called for each stock.
+Ticker symbols of stocks that are currently in the user’s portfolio are then retrieved, and getMostRecentPrice is called for each stock.
 
-getMostRecentPrice makes a call to the Quandl API to find the price of the first stock on the current date. If the price is not available, getMostRecentPrice is called recursively, with the date brought back by one day (up to a maximum of 5 days). Once the price is returned, getMostRecentPrice is called for the next stock in the portfolio, with the date for that price being passed in. 
+For the first stock in the portfolio, getMostRecentPrice makes a call to the Quandl API to find the price for the current date. If the price is not available, getMostRecentPrice is called recursively, with the date brought back by one day (up to a maximum of 5 days). Once the price is returned, getMostRecentPrice is called for the next stock in the portfolio, with the date for the returned price being passed in. 
 
 
 
