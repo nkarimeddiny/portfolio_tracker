@@ -256,16 +256,16 @@ class MainHandler(webapp2.RequestHandler):
             price_date = self.request.get("price_date")
             price_date = price_date.replace("-","")
             
-            total_amount_added = False
+            total_amount_saved = False
             try:
               total_amount = float(total_amount)
               e = TotalHolding(username = str(username), date = int(price_date), amount = total_amount)
               e.put()
-              total_amount_added = True
+              total_amount_saved = True
             except:
               pass
             
-            if total_amount_added:
+            if total_amount_saved:
               count = 0
               for listed_stock in listed_stocks:
                  dollar_value_converted = False
