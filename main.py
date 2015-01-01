@@ -268,39 +268,23 @@ class MainHandler(webapp2.RequestHandler):
             if total_amount_saved:
               count = 0
               for listed_stock in listed_stocks:
-                 dollar_value_converted = False
-                 try:
-                   dollar_value = float(dollar_values[count])
-                   dollar_value_converted = True
-                 except:
-                   pass
-                 if dollar_value_converted:
-                   current_prices_converted = False
-                   try:  
-                     price = float(current_prices[count])
-                     current_prices_converted = True
-                   except:
-                     pass
-                   if current_prices_converted:
-                     data_saved = False  
-                     try:
-                        e = StockListing2(username = str(username), date = int(price_date), stock_name = listed_stock, price = price , dollar_value = dollar_value )
-                        e.put()
-                        count += 1
-                        data_saved = True
-                     except ValueError:
-                       pass
-                     if data_saved:
-                       if count + 1 == len(listed_stocks):
-                         self.redirect("/")
-                       else:
-                         pass
-                     else:
-                       self.response.write("<h1>Error saving data. Please try again.</h1>")  
-                   else:
-                     self.response.write("<h1>Error saving data. Please try again.</h1>")  
-                 else:
-                   self.response.write("<h1>Error saving data. Please try again.</h1>")
+                valid_data = False
+                try:
+                  dollar_value = float(dollar_values[count]) 
+                  price = float(current_prices[count])
+                  valid_data = True
+                except:
+                  pass
+                if valid_data:
+                  e = StockListing2(username = str(username), date = int(price_date), stock_name = listed_stock, price = price , dollar_value = dollar_value )
+                  e.put()
+                  count += 1
+                else:
+                  self.response.write("<h1>Error saving data. Please try again.</h1>")
+                if count + 1 == len(listed_stocks):
+                  self.redirect("/")
+                else:
+                  pass
             else:
               self.response.write("<h1>Error saving data. Please try again.</h1>")
 
