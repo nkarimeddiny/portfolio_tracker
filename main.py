@@ -185,8 +185,9 @@ class MainHandler(webapp2.RequestHandler):
               stockPricesList = stockPricesDict["stockPricesList"]
               price_date = stockPricesDict["price_date"]
         ###
-
-        formatted_price_date = format(price_date, '%m/%d/%Y')
+        
+        price_date = "".join(str(price_date).split("-"))
+        formatted_price_date = self.formatDate(price_date)
         stockPricesList.append(["S+P", "Type in price"])
         
         if oldDate_dict.get("total_amount"):
