@@ -1,4 +1,4 @@
-Portfolio Tracker offers investors a tool for comparing portfolio performance to overall market performance. Whenever you update your portfolio by adding or subtracting money from stocks, you also add or subtract money from an imaginary S&P 500 index fund. Over time, you can compare your portfolio's dollar value to the S&P 500 index fund's dollar value, and see exactly how your investments have performed relative to the market.
+Portfolio Tracker offers investors a tool for comparing portfolio performance to overall market performance. With Portfolio Tracker, whenever you update your portfolio by adding or subtracting money from stocks, you also add or subtract money from an imaginary S&P 500 index fund. Over time, you can compare your portfolio's dollar value to the S&P 500 index fund's dollar value, and see exactly how your investments have performed relative to the market.
 
 I built Portfolio Tracker using the Python/webapp2 framework, with JQuery for the frontend logic, and it's hosted on Google App Engine. Stock prices are obtained from Quandl.
 
